@@ -1,0 +1,82 @@
+﻿<Window 
+    x:Class="ShutdownScheduler.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="Scheduler" 
+    Height="250" 
+    Width="250"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+    TextElement.FontWeight="Regular"
+    TextElement.FontSize="13"
+    TextOptions.TextFormattingMode="Ideal"
+    TextOptions.TextRenderingMode="Auto"
+    Background="{DynamicResource MaterialDesignPaper}"
+    FontFamily="{DynamicResource MaterialDesignFont}"
+    xmlns:vm="clr-namespace:ShutdownScheduler.ViewModels" 
+    ResizeMode="CanMinimize">
+    <Window.Resources>
+        <vm:MainWindowViewModel x:Key="MainWindowViewModel"/>
+    </Window.Resources>
+    <Grid DataContext="{Binding Source={StaticResource MainWindowViewModel}}">
+        <StackPanel 
+            Orientation="Vertical" 
+            VerticalAlignment="Center" 
+            HorizontalAlignment="Center">
+            <StackPanel 
+                HorizontalAlignment="Center" 
+                VerticalAlignment="Center" 
+                Margin="10,10,10,10">
+                <StackPanel
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center">
+                    <materialDesign:TimePicker
+                        materialDesign:HintAssist.Hint="Shutdown at"
+                        IsInvalidTextAllowed="True"
+                        Is24Hours="True"
+                        Width="120" 
+                        Margin="0,10,0,10"
+                        SelectedTime="{Binding ScheduleTime}">
+                    </materialDesign:TimePicker>
+                    <CheckBox 
+                        Width="60"
+                        Margin="10,10,10,10"
+                        IsChecked="{Binding IsNow}"
+                        Content="Now"/>
+                </StackPanel>
+                <ComboBox
+                    materialDesign:HintAssist.Hint="Mode"
+                    Width="120"
+                    ItemsSource="{Binding AvailableModes}"
+                    SelectedValue="{Binding SelecetedMode}" 
+                    Margin="0,10,0,10" 
+                    HorizontalAlignment="Left">
+                </ComboBox>
+            </StackPanel>
+            <StackPanel 
+                HorizontalAlignment="Left" 
+                VerticalAlignment="Center" 
+                Margin="10,10,10,10">
+                <Button
+                    Command="{Binding ScheduleCommand}"
+                    Style="{StaticResource MaterialDesignRaisedAccentButton}"
+                    Width="120"
+                    ToolTip="Resource name: MaterialDesignRaisedAccentButton"
+                    materialDesign:RippleAssist.Feedback="#DD000000"
+                    Content="Schedule">
+                </Button>
+                <Button
+                    Command="{Binding CancelCommand}"
+                    Style="{StaticResource MaterialDesignRaisedAccentButton}"
+                    Width="120"
+                    ToolTip="Resource name: MaterialDesignRaisedAccentButton"
+                    materialDesign:RippleAssist.Feedback="#DD000000" 
+                    Content="Cancel"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
