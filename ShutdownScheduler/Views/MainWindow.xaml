@@ -46,6 +46,8 @@
                         Width="60"
                         Margin="10,10,10,10"
                         IsChecked="{Binding IsNow}"
+                        Cursor="Hand"
+                        ToolTip="Select to schedule now"
                         Content="Now"/>
                 </StackPanel>
                 <ComboBox
@@ -65,17 +67,27 @@
                     Command="{Binding ScheduleCommand}"
                     Style="{StaticResource MaterialDesignRaisedAccentButton}"
                     Width="120"
-                    ToolTip="Resource name: MaterialDesignRaisedAccentButton"
-                    materialDesign:RippleAssist.Feedback="#DD000000"
-                    Content="Schedule">
+                    Content="Schedule" HorizontalAlignment="Left" Margin="0,0,0,1">
                 </Button>
-                <Button
-                    Command="{Binding CancelCommand}"
-                    Style="{StaticResource MaterialDesignRaisedAccentButton}"
-                    Width="120"
-                    ToolTip="Resource name: MaterialDesignRaisedAccentButton"
-                    materialDesign:RippleAssist.Feedback="#DD000000" 
-                    Content="Cancel"/>
+                <StackPanel
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center">
+                    <Button
+                        Command="{Binding CancelCommand}"
+                        Style="{StaticResource MaterialDesignRaisedAccentButton}"
+                        Width="120"
+                        Content="Cancel" Margin="0,1,0,0"/>
+                    <materialDesign:PackIcon 
+                        Kind="AlertCircle" 
+                        VerticalAlignment="Center" 
+                        Margin="10,0,0,0"
+                        Height="30" 
+                        Width="30"
+                        Cursor="Hand"
+                        Visibility="{Binding ExecutionTooltip, Converter={StaticResource NullableToVisibilityConverter}}"
+                        ToolTip="{Binding ExecutionTooltip}"/>
+                </StackPanel>
             </StackPanel>
         </StackPanel>
     </Grid>
