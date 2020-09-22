@@ -17,9 +17,11 @@
     Background="{DynamicResource MaterialDesignPaper}"
     FontFamily="{DynamicResource MaterialDesignFont}"
     xmlns:vm="clr-namespace:ShutdownScheduler.ViewModels" 
+    xmlns:vr="clr-namespace:ShutdownScheduler.Validators"
     ResizeMode="CanMinimize">
     <Window.Resources>
         <vm:MainWindowViewModel x:Key="MainWindowViewModel"/>
+        <vr:NotEmptyValidationRule x:Key="NotEmptyValidationRule"/>
     </Window.Resources>
     <Grid DataContext="{Binding Source={StaticResource MainWindowViewModel}}">
         <StackPanel 
@@ -40,7 +42,17 @@
                         Is24Hours="True"
                         Width="120" 
                         Margin="0,10,0,10"
-                        SelectedTime="{Binding ScheduleTime}">
+                        IsEnabled="{Binding IsNow, Converter={StaticResource NotConverter}}">
+                        <materialDesign:TimePicker.SelectedTime>
+                            <Binding
+                                Path="ScheduleTime"
+                                UpdateSourceTrigger="PropertyChanged">
+                                <Binding.ValidationRules>
+                                    <vr:NotEmptyValidationRule
+                                        ValidatesOnTargetUpdated="True"/>
+                                </Binding.ValidationRules>
+                            </Binding>
+                        </materialDesign:TimePicker.SelectedTime>
                     </materialDesign:TimePicker>
                     <CheckBox 
                         Width="60"
@@ -50,14 +62,29 @@
                         ToolTip="Select to schedule now"
                         Content="Now"/>
                 </StackPanel>
-                <ComboBox
-                    materialDesign:HintAssist.Hint="Mode"
-                    Width="120"
-                    ItemsSource="{Binding AvailableModes}"
-                    SelectedValue="{Binding SelecetedMode}" 
-                    Margin="0,10,0,10" 
-                    HorizontalAlignment="Left">
-                </ComboBox>
+                <StackPanel
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Center">
+                    <ComboBox
+                        materialDesign:HintAssist.Hint="Mode"
+                        Width="120"
+                        ItemsSource="{Binding AvailableModes}"
+                        SelectedValue="{Binding SelecetedMode}" 
+                        Margin="0,10,0,10" 
+                        HorizontalAlignment="Left">
+                    </ComboBox>
+                    <materialDesign:PackIcon 
+                        Kind="AlertCircle" 
+                        VerticalAlignment="Center" 
+                        Margin="10,0,0,0"
+                        Height="30" 
+                        Width="30"
+                        Cursor="Hand"
+                        Foreground="{DynamicResource PrimaryHueMidBrush}"
+                        Visibility="{Binding Tooltip, Converter={StaticResource NullableToVisibilityConverter}}"
+                        ToolTip="{Binding Tooltip}"/>
+                </StackPanel>
             </StackPanel>
             <StackPanel 
                 HorizontalAlignment="Left" 
@@ -77,16 +104,14 @@
                         Command="{Binding CancelCommand}"
                         Style="{StaticResource MaterialDesignRaisedAccentButton}"
                         Width="120"
-                        Content="Cancel" Margin="0,1,0,0"/>
-                    <materialDesign:PackIcon 
-                        Kind="AlertCircle" 
-                        VerticalAlignment="Center" 
+                        Content="Cancel"
+                        Margin="0,1,0,0"/>
+                    <Label
                         Margin="10,0,0,0"
-                        Height="30" 
-                        Width="30"
-                        Cursor="Hand"
-                        Visibility="{Binding ExecutionTooltip, Converter={StaticResource NullableToVisibilityConverter}}"
-                        ToolTip="{Binding ExecutionTooltip}"/>
+                        VerticalAlignment="Center"
+                        Content="{Binding Countdown}"
+                        Visibility="{Binding Countdown, Converter={StaticResource NullableToVisibilityConverter}}"
+                        Foreground="{DynamicResource PrimaryHueMidBrush}"/>
                 </StackPanel>
             </StackPanel>
         </StackPanel>

@@ -7,15 +7,17 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace ShutdownScheduler.ViewModels
 {
     public class MainWindowViewModel : INotifyPropertyChanged
     {
         #region variables
+        private TimeSpan? _timeLeft;
         private Timer _timer;
+        private System.Timers.Timer _countdownTimer;
 
         private Dictionary<AvailableScheduleModes, string> _modeCommand = new Dictionary<AvailableScheduleModes, string>
         {
@@ -25,14 +27,21 @@ namespace ShutdownScheduler.ViewModels
             { AvailableScheduleModes.LogOff, "-l" }
         };
 
-        private string _executionTooltip;
+        private string _tooltip;
 
-        public string ExecutionTooltip
+        public string Tooltip
         {
-            get { return _executionTooltip; }
-            set { _executionTooltip = value; NotifyOnPropertyChanged(nameof(ExecutionTooltip)); }
+            get { return _tooltip; }
+            set { _tooltip = value; NotifyOnPropertyChanged(nameof(Tooltip)); }
         }
 
+        private string _countdown;
+
+        public string Countdown
+        {
+            get { return _countdown; }
+            set { _countdown = value; NotifyOnPropertyChanged(nameof(Countdown)); }
+        }
 
         private bool _isNow = false;
 
@@ -76,26 +85,37 @@ namespace ShutdownScheduler.ViewModels
         #endregion
 
         #region commands
-        public ICommand ScheduleCommand => new RelayCommand(ScheduleExecute);
+        public ICommand ScheduleCommand => new RelayCommand(ScheduleExecute, (o) => 
+        { 
+            if (ScheduleTime.HasValue)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        });
         public ICommand CancelCommand => new RelayCommand(CancelExecute);
 
         private async void ScheduleExecute(object parameter)
         {
             var time = CalculateTime();
-
             await ScheduleTask(time);
         }
 
         private async void CancelExecute(object parameter)
         {
-            await StopAsync();
+            await ClearTimer();
         }
         #endregion
 
         private Task ScheduleTask(double time)
         {
             _timer = new Timer(RunCommand, null, TimeSpan.FromSeconds(time), TimeSpan.Zero);
-            ExecutionTooltip = $"Executed {_selectedMode} at {_scheduleTime.Value:HH:MM}";
+
+            _countdownTimer.Interval = 1000;
+            _countdownTimer.Start();
 
             return Task.CompletedTask;
         }
@@ -103,15 +123,36 @@ namespace ShutdownScheduler.ViewModels
         private void RunCommand(object state)
         {
             var command = _modeCommand[_selectedMode];
+
+            ClearTimer();
+
             Process.Start("shutdown", $"{command}");
         }
 
-        private Task StopAsync()
+        private Task ClearTimer()
         {
             _timer?.Change(Timeout.Infinite, 0);
-            ExecutionTooltip = null;
+            _countdownTimer.Stop();
+            Tooltip = null;
+            Countdown = null;
 
             return Task.CompletedTask;
+        }
+
+        private void CountdownTick(object sender, EventArgs e)
+        {
+            _timeLeft = _scheduleTime - DateTimeOffset.Now;
+
+            if (_timeLeft.Value.TotalSeconds < 0)
+            {
+                var now = DateTime.Now;
+                _timeLeft = (now.AddDays(1).AddSeconds(_timeLeft.Value.TotalSeconds) - now);
+            }
+
+            Tooltip = $"Scheduled {_selectedMode} at {_scheduleTime.Value.Hour:00}:{_scheduleTime.Value.Minute:00}";
+            Countdown = $"{_timeLeft.Value.Hours:00}:{_timeLeft.Value.Minutes:00}:{_timeLeft.Value.Seconds:00}";
+
+            CommandManager.InvalidateRequerySuggested();
         }
 
         private double CalculateTime()
@@ -130,6 +171,7 @@ namespace ShutdownScheduler.ViewModels
                     timeToShutdown = (now.AddDays(1).AddSeconds(timeToShutdown) - now)
                         .TotalSeconds;
                 }
+
                 return timeToShutdown;
             }
         }
@@ -142,6 +184,8 @@ namespace ShutdownScheduler.ViewModels
                 .Cast<AvailableScheduleModes>()
                 .ToList();
             _selectedMode = AvailableScheduleModes.Shutdown;
+            _countdownTimer = new System.Timers.Timer();
+            _countdownTimer.Elapsed += new System.Timers.ElapsedEventHandler(CountdownTick);
         }
     }
 }
