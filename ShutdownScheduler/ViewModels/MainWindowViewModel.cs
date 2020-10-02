@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Windows.Threading;
 
 namespace ShutdownScheduler.ViewModels
 {
@@ -18,6 +17,7 @@ namespace ShutdownScheduler.ViewModels
         private TimeSpan? _timeLeft;
         private Timer _timer;
         private System.Timers.Timer _countdownTimer;
+        private DateTime? _timeToExecute;
 
         private Dictionary<AvailableScheduleModes, string> _modeCommand = new Dictionary<AvailableScheduleModes, string>
         {
@@ -101,6 +101,7 @@ namespace ShutdownScheduler.ViewModels
         private async void ScheduleExecute(object parameter)
         {
             var time = CalculateTime();
+
             await ScheduleTask(time);
         }
 
@@ -113,6 +114,7 @@ namespace ShutdownScheduler.ViewModels
         private Task ScheduleTask(double time)
         {
             _timer = new Timer(RunCommand, null, TimeSpan.FromSeconds(time), TimeSpan.Zero);
+            _timeToExecute = _scheduleTime;
 
             _countdownTimer.Interval = 1000;
             _countdownTimer.Start();
@@ -135,21 +137,22 @@ namespace ShutdownScheduler.ViewModels
             _countdownTimer.Stop();
             Tooltip = null;
             Countdown = null;
+            _timeToExecute = null;
 
             return Task.CompletedTask;
         }
 
         private void CountdownTick(object sender, EventArgs e)
         {
-            _timeLeft = _scheduleTime - DateTimeOffset.Now;
+            _timeLeft = _timeToExecute - DateTimeOffset.Now;
 
             if (_timeLeft.Value.TotalSeconds < 0)
             {
                 var now = DateTime.Now;
-                _timeLeft = (now.AddDays(1).AddSeconds(_timeLeft.Value.TotalSeconds) - now);
+                _timeLeft = now.AddDays(1).AddSeconds(_timeLeft.Value.TotalSeconds) - now;
             }
 
-            Tooltip = $"Scheduled {_selectedMode} at {_scheduleTime.Value.Hour:00}:{_scheduleTime.Value.Minute:00}";
+            Tooltip = $"Scheduled {_selectedMode} at {_timeToExecute.Value.Hour:00}:{_timeToExecute.Value.Minute:00}";
             Countdown = $"{_timeLeft.Value.Hours:00}:{_timeLeft.Value.Minutes:00}:{_timeLeft.Value.Seconds:00}";
 
             CommandManager.InvalidateRequerySuggested();
